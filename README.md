@@ -1,6 +1,6 @@
 # b9122_homework2
 
-This repository stores two main types of code for webcrawling. It was created by Rayan Elatmani as part of a homework project for his Computer for Business class at Columbia Business School.
+This repository stores two main types of code for webcrawling. It was created by Rayan Elatmani as part of a homework project for his Computer for Business class at Columbia Business School!
 
 The first code shows how to webcrawl over all the urls of one specific domain and retrieve these urls in a list.
 

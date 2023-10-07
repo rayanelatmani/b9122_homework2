@@ -1,0 +1,158 @@
+#As seen in class
+
+from bs4 import BeautifulSoup
+import urllib.request
+#from urllib.request import Request
+
+seed_url = "https://www8.gsb.columbia.edu"
+
+urls = [seed_url]    #queue of urls to crawl
+seen = [seed_url]    #stack of urls seen so far
+opened = []          #we keep track of seen urls so that we don't revisit them
+
+maxNumUrl = 50; #set the maximum number of urls to visit
+print("Starting with url="+str(urls))
+while len(urls) > 0 and len(opened) < maxNumUrl:
+    # DEQUEUE A URL FROM urls AND TRY TO OPEN AND READ IT
+    try:
+        curr_url=urls.pop(0)
+        print("num. of URLs in stack: %d " % len(urls))
+        print("Trying to access= "+curr_url)
+        req = urllib.request.Request(curr_url,headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urllib.request.urlopen(req).read()
+        opened.append(curr_url)
+
+    except Exception as ex:
+        print("Unable to access= "+curr_url)
+        print(ex)
+        continue    #skip code below
+
+    # IF URL OPENS, CHECK WHICH URLS THE PAGE CONTAINS
+    # ADD THE URLS FOUND TO THE QUEUE url AND seen
+    soup = BeautifulSoup(webpage)  #creates object soup
+    # Put child URLs into the stack
+    for tag in soup.find_all('a', href = True): #find tags with links
+        childUrl = tag['href'] #extract just the link
+        o_childurl = childUrl
+        childUrl = urllib.parse.urljoin(seed_url, childUrl)
+        print("seed_url=" + seed_url)
+        print("original childurl=" + o_childurl)
+        print("childurl=" + childUrl)
+        print("seed_url in childUrl=" + str(seed_url in childUrl))
+        print("Have we seen this childUrl=" + str(childUrl in seen))
+        if seed_url in childUrl and childUrl not in seen:
+            print("***urls.append and seen.append***")
+            urls.append(childUrl)
+            seen.append(childUrl)
+        else:
+            print("######")
+
+print("num. of URLs seen = %d, and scanned = %d" % (len(seen), len(opened)))
+print("List of seen URLs:")
+for seen_url in seen:
+    print(seen_url)
+
+
+#As seen in my homework
+
+#Part1
+
+from bs4 import BeautifulSoup
+import urllib.request
+url = "https://press.un.org/en"
+req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+webpage = urllib.request.urlopen(req).read()
+soup = BeautifulSoup(webpage)
+
+ok = soup.find_all('a', hreflang = "en")
+
+base_url = url + '/content/press-release?page={}'
+
+u = 0
+
+while len(crisis_list) < 10 and u < 10:
+    
+    url_to_visit = base_url.format(u)
+    req_q = urllib.request.Request(url_to_visit, headers={'User-Agent': 'Mozilla/5.0'})
+    webpage_e = urllib.request.urlopen(req_q).read()
+    soup_p = BeautifulSoup(webpage_e)
+        
+    visiting = soup_p.find_all('a', hreflang = "en")
+        
+    for i in visiting:
+        url_visitt = seed_url + i['href']
+        req_qq = urllib.request.Request(url_visitt, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage_ee = urllib.request.urlopen(req_qq).read()
+        soup_pp = BeautifulSoup(webpage_ee)
+            
+        if "crisis" in soup_pp.find('div', class_='field field--name-body field--type-text-with-summary field--label-hidden field__item').get_text() and url_visitt not in crisis_list:
+            crisis_list.append(url_visitt)
+    u += 1
+
+#Part 2
+
+pip install --upgrade certifi
+pip install selenium
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+
+driver = webdriver.Chrome()
+
+url_plenary = []
+crisis_urls = []
+
+while len(crisis_urls) < 10:
+    load_more_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'continuesLoading_button')))
+    load_more_button.click()
+    time.sleep(5)
+    page_content = driver.page_source
+    soup = BeautifulSoup(page_content, 'html.parser')
+    dac = soup.find_all('a', title ='Read more')
+
+    for i in dac:
+        url_visit = i['href']
+        req = urllib.request.Request(url_visit, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urllib.request.urlopen(req).read()
+        soupp = BeautifulSoup(webpage)
+        tag = soupp.find_all('span', class_ ="ep_name")
+        if 'Plenary session' in tag[5]:
+            url_plenary.append(url_visit)
+    
+    for u in url_plenary:
+        req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urllib.request.urlopen(req).read()
+        soup = BeautifulSoup(webpage)
+        text = soup.find_all('div', class_ = 'ep-a_text')
+        for a in text:
+            if 'crisis' in a.get_text():
+                crisis_urls.append(u)
+                crisis_urls = list(dict.fromkeys(crisis_urls))
+
+    
+driver.quit()
+driver.get('https://www.europarl.europa.eu/news/en/press-room')
+
+seed_url = url[:-3]
+
+press_list = []
+
+crisis_list = []
+
+for i in ok:
+    url_visit = seed_url + i['href']
+    reqq = urllib.request.Request(url_visit, headers={'User-Agent': 'Mozilla/5.0'})
+    webpagee = urllib.request.urlopen(reqq).read()
+    soupp = BeautifulSoup(webpagee)
+    if soupp.find_all("a", href =  "/en/press-release") != []:
+        press_list.append(url_visit)
+        
+for i in press_list:
+    reqp = urllib.request.Request(i, headers={'User-Agent': 'Mozilla/5.0'})
+    webpagep = urllib.request.urlopen(reqp).read()
+    souppp = BeautifulSoup(webpagep)
+    if "crisis" in souppp.find('div', class_='field field--name-body field--type-text-with-summary field--label-hidden field__item').get_text():
+        crisis_list.append(i)
